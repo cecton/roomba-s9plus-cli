@@ -11,3 +11,4 @@ paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust.git" }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 structopt = "0.3.15"
+openssl = "0.10"

@@ -1,10 +1,12 @@
 mod api;
 mod cli;
 
+use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
 use paho_mqtt as mqtt;
 use std::collections::HashSet;
+use std::io::Read;
 use std::io::Write;
-use std::net::UdpSocket;
+use std::net::{TcpStream, ToSocketAddrs, UdpSocket};
 use std::process;
 use structopt::StructOpt;
 
@@ -14,6 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         cli::AnyCommand::Unauthenticated(cli::UnauthenticatedCommand::FindIp) => {
             find_ip_address()?;
+        }
+        cli::AnyCommand::Unauthenticated(cli::UnauthenticatedCommand::GetPassword { address }) => {
+            get_password(address)?;
         }
         cli::AnyCommand::Authenticated(cli) => {
             // Create a client & define connect options
@@ -96,4 +101,43 @@ fn find_ip_address() -> std::io::Result<()> {
             let _ = fh.flush();
         }
     }
+}
+
+fn get_password<A: ToSocketAddrs>(addr: A) -> std::io::Result<()> {
+    println!(
+        "Warning: please hold the Home button for 2 seconds and check that the ring led is \
+        blinking blue."
+    );
+
+    let packet: &[u8] = &[0xf0, 0x05, 0xef, 0xcc, 0x3b, 0x29, 0x00];
+
+    let mut builder = SslConnector::builder(SslMethod::tls()).unwrap();
+    builder.set_verify(SslVerifyMode::NONE);
+    let connector = builder.build();
+    let socket = TcpStream::connect(addr)?;
+    socket.set_read_timeout(Some(std::time::Duration::from_secs(3)))?;
+    let mut stream = connector.connect("ignore", socket).unwrap();
+
+    let mut stdout = std::io::stdout();
+    loop {
+        stream.write_all(&packet)?;
+
+        let mut data = Vec::new();
+        if stream.read_to_end(&mut data).is_ok() {
+            if let Some(password) = data
+                .rsplit(|&x| x == 0)
+                .filter(|x| !x.is_empty())
+                .find_map(|x| String::from_utf8(x.to_vec()).ok())
+            {
+                let _ = writeln!(stdout, "found.\nPassword: {}", password);
+                break;
+            }
+        }
+
+        let mut fh = stdout.lock();
+        let _ = fh.write(b".");
+        let _ = fh.flush();
+    }
+
+    Ok(())
 }

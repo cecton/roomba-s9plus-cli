@@ -34,6 +34,7 @@ pub struct AuthenticatedCommand {
 #[derive(StructOpt, Debug)]
 pub enum UnauthenticatedCommand {
     FindIp,
+    GetPassword { address: String },
 }
 
 impl Command {
