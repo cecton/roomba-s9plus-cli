@@ -4,11 +4,16 @@ mod cli;
 use paho_mqtt as mqtt;
 use std::collections::HashSet;
 use std::io::Write;
-use std::net::UdpSocket;
+use std::net::{UdpSocket, TcpStream, ToSocketAddrs};
 use std::process;
 use structopt::StructOpt;
+use std::io::Read;
+use openssl::ssl::{SslMethod, SslConnector, SslVerifyMode};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    use std::net::ToSocketAddrs;
+    sign_up("10.10.0.90:8883".to_socket_addrs().unwrap().next().unwrap())?;
+    std::process::exit(0);
     let cli = cli::Cli::from_args();
 
     match cli.command {
@@ -96,4 +101,35 @@ fn find_ip_address() -> std::io::Result<()> {
             let _ = fh.flush();
         }
     }
+}
+
+fn sign_up<A: ToSocketAddrs + std::fmt::Display>(addr: A) -> std::io::Result<()> {
+    let packet: &[u8] = &[0xf0, 0x05, 0xef, 0xcc, 0x3b, 29, 00];
+
+    let mut builder = SslConnector::builder(SslMethod::tls()).unwrap();
+    builder.set_verify(SslVerifyMode::NONE);
+    //builder.set_read_ahead(true);
+    //builder.set_mode(openssl::ssl::SslMode::ENABLE_PARTIAL_WRITE);
+    //builder.set_cipher_list("AES128-SHA256").unwrap();
+    let connector = builder.build();
+    let tcp_stream = TcpStream::connect(addr)?;
+    let mut stream = connector.connect("10.10.0.90", tcp_stream).unwrap();
+
+    println!("handshake complete");
+
+    stream.write(&packet)?;
+    stream.flush()?;
+    //let mut plaintext = vec![];
+    //stream.read_to_end(&mut plaintext).unwrap();
+    loop {
+        let mut plaintext = [0; 1000];
+        println!("reading...");
+        let length = stream.read(&mut plaintext).unwrap();
+
+        println!("{:?}", plaintext[..length].to_vec());
+        println!("{}", String::from_utf8_lossy(&plaintext[..length]));
+        break;
+    }
+
+    Ok(())
 }
