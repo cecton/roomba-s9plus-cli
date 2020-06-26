@@ -360,7 +360,7 @@ dependencies = [
 [[package]]
 name = "paho-mqtt"
 version = "0.8.0"
-source = "git+https://github.com/eclipse/paho.mqtt.rust.git#47eb3eaee53a9e5f3687f9120b20d15a22a7bb9f"
+source = "git+https://github.com/eclipse/paho.mqtt.rust.git?rev=47eb3eaee53a9e5f3687f9120b20d15a22a7bb9f#47eb3eaee53a9e5f3687f9120b20d15a22a7bb9f"
 dependencies = [
  "futures 0.3.5",
  "futures-timer",
@@ -373,7 +373,7 @@ dependencies = [
 [[package]]
 name = "paho-mqtt-sys"
 version = "0.4.0"
-source = "git+https://github.com/eclipse/paho.mqtt.rust.git#47eb3eaee53a9e5f3687f9120b20d15a22a7bb9f"
+source = "git+https://github.com/eclipse/paho.mqtt.rust.git?rev=47eb3eaee53a9e5f3687f9120b20d15a22a7bb9f#47eb3eaee53a9e5f3687f9120b20d15a22a7bb9f"
 dependencies = [
  "cmake",
 ]
