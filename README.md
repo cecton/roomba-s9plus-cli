@@ -1,3 +1,5 @@
+**WARNING: Project closed in favor of https://github.com/cecton/roomba**
+
 Roomba S9+ CLI
 ==============
 
